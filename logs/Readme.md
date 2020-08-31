@@ -18,8 +18,9 @@ Docker Logs methodology
     $ sudo vim /etc/rsyslog.conf
 
     # Uncomment the lines
-    module(load="imudp")
-    input(type="imudp" port="514")
+      
+      module(load="imudp")
+      input(type="imudp" port="514")
 
     $ sudo systemctl restart rsyslog
 
