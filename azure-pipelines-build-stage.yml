@@ -1,0 +1,63 @@
+name: $(Date:yyyyMMdd)$(Hours)$(Minutes)$(Rev:.r)
+
+trigger:
+- master
+
+resources:
+- repo: self
+
+variables:
+  tag: $(Build.BuildNumber)
+  repositoryName: acriodemoslockdev.azurecr.io
+  imageName: api-one
+
+pool: 
+  name: miga
+  demands:  
+  - Agent.ComputerName -equals access-server
+
+stages:
+- stage: BuildPushVerify
+  displayName: FrontEndImageBuildProcess
+  jobs:  
+  - job: BuildAndPush
+    displayName: Build
+    steps:
+      - task: Docker@2
+        displayName: Build Docker Image
+        inputs:
+          command: build
+          containerRegistry: docker-service
+          repository: $(imageName)
+          Dockerfile: source/BackendService/Dockerfile
+          tags: $(tag)
+
+      - script: |
+          docker run -d --name $(imageName)  $(repositoryName)/$(imageName):$(Build.BuildNumber)
+        displayName: Verify Docker Image Running State
+
+      - script: |
+          docker rm $(docker ps -aq --filter name=$(imageName))  -f
+        displayName: Delete Running State Container
+
+      - task: Docker@2
+        displayName: Push Docker Image to ACR
+        inputs:
+          command: push
+          containerRegistry: docker-service
+          repository: $(imageName)
+          Dockerfile: source/BackendService/Dockerfile
+          tags: $(tag)
+          
+      - script: |
+          docker rmi $(repositoryName)/$(imageName):$(Build.BuildNumber)
+        displayName: Remove Last Build Image
+
+      
+      - task: KubernetesManifest@0
+        displayName: kubernetes-deploy
+        inputs:
+          kubernetesServiceConnection: migaportal-dev-ui-service-account
+          namespace: applicationservice
+          manifests: source/kubernetes-deployment/api-one.yml
+          # containers: $(imagename):$(tag)
