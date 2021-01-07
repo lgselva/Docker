@@ -29,9 +29,15 @@ COPY . .
 #COPY BackendService2/BackendService2.csproj BackendService2/BackendService2.csproj
 #COPY BackendService2.Tests/BackendService2.Tests.csproj BackendService2.Tests/BackendService2.Tests.csproj
 RUN dotnet tool install dotnet-reportgenerator-globaltool --version 4.0.6 --tool-path /tools
-RUN dotnet test --results-directory /testresults --logger "trx;LogFileName=test_results.xml" /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura /p:CoverletOutput=/testresults/coverage/ /p:Exclude="[xunit.*]*%2c[StackExchange.*]*" BackendService2.Tests/BackendService2.Tests.csproj
+RUN dotnet test --results-directory /testresults \
+    --logger "trx;LogFileName=test_results.xml" \
+    /p:CollectCoverage=true \
+    /p:CoverletOutputFormat=cobertura \
+    /p:CoverletOutput=/testresults/coverage/ \
+    /p:Exclude="[xunit.*]*%2c[StackExchange.*]*" \
+    BackendService2.Tests/BackendService2.Tests.csproj
+    
 WORKDIR /src
-
 
 # Install Sonar Scanner, Coverlet and Java (required for Sonar Scanner)
 RUN apt-get update && apt-get install -y openjdk-11-jdk -qq
@@ -48,8 +54,6 @@ RUN dotnet sonarscanner begin \
     /d:sonar.login="$SONAR_TOKEN"
 
 RUN dotnet restore
-
-#COPY . .
 
 # Build and test the application
 RUN dotnet publish -c Release -r alpine-x64 --self-contained true /p:PublishTrimmed=true -o ./publish
