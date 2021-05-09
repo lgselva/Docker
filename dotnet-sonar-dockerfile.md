@@ -1,8 +1,4 @@
-#######################################################
-    # Step 1: Build the application in a container        #
-    #######################################################
-    # Download the official ASP.NET Core SDK image
-    # to build the project while creating the docker image
+```Dockerfile
 
     FROM mcr.microsoft.com/dotnet/core/sdk:3.1 as build
 
@@ -78,3 +74,5 @@
 
     # Start the application
     ENTRYPOINT ["./BackendService2", "--urls", "http://0.0.0.0:8080"]
+
+```
